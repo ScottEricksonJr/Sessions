@@ -1,0 +1,35 @@
+# yaml-language-server: $schema=https://aka.ms/configuration-dsc-schema/0.2
+properties:
+  configurationVersion: 0.2.0
+  assertions:
+  - resource: Microsoft.Windows.Developer/OsVersion
+    id: MinOSVersionWin11
+    directives:
+      description: Verify min OS version requirement
+      allowPrerelease: true
+    settings:
+      MinVersion: '10.0.22000'
+  resources:
+###########################################################################
+  - resource: Microsoft.WinGet.DSC/WinGetPackage
+    id: vsPackage
+    directives:
+      description: Install Visual Studio 2022 Professional
+      allowPrerelease: true
+    settings:
+      id: Microsoft.VisualStudio.2022.Professional
+      source: winget
+###########################################################################
+  - resource: Microsoft.VisualStudio.DSC/VSComponents
+    id: vsWorkloads
+    dependsOn:
+      - vsPackage
+    directives:
+      description: Install required VS workloads
+      allowPrerelease: true
+    settings:
+      productId: Microsoft.VisualStudio.Product.Professional
+      channelId: VisualStudio.17.Release
+      includeRecommended: true
+      AllowUnsignedExtensions: true
+      VSConfigFile: "${WinGetConfigRoot}\\referencefiles\\.vsconfig"

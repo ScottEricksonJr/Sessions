@@ -1,0 +1,82 @@
+# yaml-language-server: $schema=https://aka.ms/configuration-dsc-schema/0.2
+properties:
+  configurationVersion: 0.2.0
+  assertions:
+  - resource: Microsoft.Windows.Developer/OsVersion
+    id: MinOSVersionWin11
+    directives:
+      description: Verify min OS version requirement
+      allowPrerelease: true
+    settings:
+      MinVersion: '10.0.22000'
+  resources:
+###########################################################################
+  - resource: Microsoft.Windows.Developer/DeveloperMode
+    id: DeveloperModeEnabled
+    directives:
+      description: Enable Developer Mode
+      allowPrerelease: true
+    settings:
+      Ensure: Present
+###########################################################################
+  - resource: PSDscResources/Registry
+    id: LongPathsEnabled
+    directives:
+      description: Enable Long Paths
+      allowPrerelease: true
+    settings:
+      Key: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem
+      ValueName: LongPathsEnabled
+      ValueType: Dword
+      ValueData: 00000001
+      Ensure: Present
+      Force: True
+###########################################################################
+# show hidden files
+  - resource: Microsoft.Windows.Developer/Explorer
+    id: explorertweaks
+    directives:
+      description: Show hidden files and file extensions
+      allowPrerelease: true
+    settings:
+      HiddenFiles: true
+      FileExtensions: true
+################################################
+# show full path in title bar
+
+################################################
+# Show end task in taskbar by right click
+  - resource: PSDscResources/Registry
+    id: ShowEndTaskInTaskbar
+    directives:
+      description: Show end task in taskbar by right click
+      allowPrerelease: true
+    settings:
+      Key: HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarDeveloperSettings
+      ValueName: TaskbarEndTask
+      ValueType: Dword
+      ValueData: 00000001
+      Ensure: Present
+      Force: True
+###########################################################################
+  - resource: Microsoft.WinGet.DSC/WinGetPackage
+      directives:
+        description: Install Git
+      settings:
+        id: Git.Git
+        source: winget
+  - resource: GitDsc/GitClone
+    directives:
+      description: Clone the winget-cli repository
+      allowPrerelease: true
+    settings:
+      HttpsUrl: https://github.com/microsoft/winget-cli.git
+      RootDirectory: "${WingetConfigRoot}/SampleRepos/"
+    - resource: GitDsc/GitRemote
+      directives:
+        description: Add a remote repository to the cloned winget-cli repository.
+        allowPrerelease: true
+      settings:
+        RemoteName: exampleName
+        RemoteUrl: https://github.com/exampleName/winget-cli.git
+        ProjectDirectory: '${WingetConfigRoot}/SampleRepos/winget-cli'

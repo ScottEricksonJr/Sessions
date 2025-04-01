@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=https://aka.ms/configuration-dsc-schema/0.2
+properties:
+  configurationVersion: 0.2.0
+  assertions:
+  - resource: Microsoft.Windows.Developer/OsVersion
+    id: MinOSVersionWin11
+    directives:
+      description: Verify min OS version requirement
+      allowPrerelease: true
+    settings:
+      MinVersion: '10.0.22000'
+  resources:
+###########################################################################
+# Setting: Create Recast Administrator group
+# Notes:
+###########################################################################
+  - resource: xPSDesiredStateConfiguration/xGroup
+    id: RecastAdminGroup
+    directives:
+      description: Ensure Recast Administrators group exists
+      allowPrerelease: true
+    settings:
+      GroupName: "Recast Administrators"
+      Ensure: Present
+  - resource: xPSDesiredStateConfiguration/xGroup
+    id: RecastAdminGroupMembers
+    dependsOn:
+      - RecastAdminGroup
+    directives:
+      description: Ensure is a member of Recast Administrators group
+      allowPrerelease: true
+    settings:
+      GroupName: "Recast Administrators"
+      MembersToInclude: ["DOMAIN\\GROUPNAME"]
+      Ensure: Present
+
+#Install IIS
+#Configure it
+#WebAdministrationDsc
