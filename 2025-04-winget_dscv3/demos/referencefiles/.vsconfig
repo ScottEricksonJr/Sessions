@@ -5,12 +5,6 @@
     // You can use the installer to select the components you want to install and then export them,
     // Or you can specify the ones you want according to the [component-id's](https://learn.microsoft.com/en-us/visualstudio/install/workload-and-component-ids).
     // This array should not be null! If you don't want to install any component, just leave the array empty.
-    "Microsoft.VisualStudio.Workload.ManagedDesktop",
-    "Microsoft.Net.ComponentGroup.4.6.2-4.7.1.DeveloperTools",
-    "Microsoft.Net.Component.4.6.2.TargetingPack",
-    "Microsoft.Net.Component.4.6.2.SDK",
-    "Microsoft.NetCore.Component.Runtime.6.0",
-    "wasm.tools.net6",
     "Microsoft.VisualStudio.Workload.NativeDesktop",
     "Microsoft.VisualStudio.Workload.NetWeb"
   ],
@@ -20,10 +14,6 @@
     // The extensions must be in a *.vsix package
     // Make sure that the extensions you specify are designed to work with that version of Visual Studio.
     // examples below
-    "https://marketplace.visualstudio.com/items?itemName=FireGiant.FireGiantHeatWaveDev17",
-    "https://marketplace.visualstudio.com/items?itemName=SamanAzadi1996.CleanBinAndObj",
-    "https://marketplace.visualstudio.com/items?itemName=SteveCadwallader.CodeMaidVS2022",
-    "https://marketplace.visualstudio.com/items?itemName=SonarSource.SonarLintforVisualStudio2022",
     "https://marketplace.visualstudio.com/items?itemName=vs-publisher-141975.SwitchStartupProjectForVS2022"
   ]
 }

@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/PowerShell/DSC/main/schemas/2023/08/bundled/config/document.vscode.json
+$schema: https://aka.ms/dsc/schemas/v3/bundled/config/document.json
+resources:                                        ## Each resource will go under here
+  - name: Windows PowerShell                      ## Description of the resource
+    type: Microsoft.DSC/Powershell                ## Resource adapter to class based DSC Powershell resources. (DSCv2)
+    properties:                                   ## Properties of the resource
+      resources:                                  ## Each instance of the powershell resource goes here
+      - name: Install VS Code                     ## Description of the resource
+        type: Microsoft.WinGet.DSC/WinGetPackage  ## DSCv2 resource being called - Winget
+        properties:                               ## Properties of the Winget resource
+          id: Microsoft.VisualStudioCode          ## WinGet ID of the package to install
+          source: winget                          ## Source of the package to install

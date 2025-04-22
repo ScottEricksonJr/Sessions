@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=https://aka.ms/configuration-dsc-schema/0.2
+properties:
+  configurationVersion: 0.2.0
+  resources:
+  - resource: Microsoft.DSC/Include
+    id: vscode
+    directives:
+      description: Install VS Code
+      allowPrerelease: true
+    settings:
+      configurationFile: 11-dscv3-simple.dsc.yaml
+      #parametersFile: osinfo.parameters.yaml

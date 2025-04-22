@@ -1,11 +1,11 @@
 # yaml-language-server: $schema=https://aka.ms/configuration-dsc-schema/0.2
 properties:
-  configurationVersion: 0.2.0
-  resources:
-  - resource: Microsoft.WinGet.DSC/WinGetPackage
-    id: vscode
-    directives:
-      description: Install VS Code
-      allowPrerelease: true
-    settings:
-      id: Microsoft.VisualStudioCode
+  configurationVersion: 0.2.0                       ## This is the version of the configuration schema. This should always be set to 0.2.0
+  resources:                                        ## Each resource will go under here
+  - resource: Microsoft.WinGet.DSC/WinGetPackage    ## DSC resource being called. This calls the WinGetPackage resource
+    id: vscode                                      ## ID of the resource. This is used so you can reference this resource elsewhere
+    directives:                                     ## Directives are used to configure the resource
+      description: Install VS Code                  ## This is a description of the resource. This is used for documentation purposes
+      allowPrerelease: true                         ## This is a directive that allows you to install pre-release versions of the resource
+    settings:                                       ## Settings are the parameters that are passed to the resource
+      id: Microsoft.VisualStudioCode                ## This is the ID of the package that you want to install. 

@@ -1,4 +1,5 @@
 # yaml-language-server: $schema=https://aka.ms/configuration-dsc-schema/0.2
+#######TODO: Lots 
 properties:
   configurationVersion: 0.2.0
   assertions:
@@ -33,14 +34,15 @@ properties:
       Force: True
 ###########################################################################
 # show hidden files
-  - resource: Microsoft.Windows.Developer/Explorer
+  - resource: Microsoft.Windows.Developer/WindowsExplorer
     id: explorertweaks
     directives:
       description: Show hidden files and file extensions
       allowPrerelease: true
     settings:
-      HiddenFiles: true
-      FileExtensions: true
+      HiddenFiles: Show
+      FileExtensions: Show
+      RestartExplorer: True
 ################################################
 # show full path in title bar
 
@@ -58,13 +60,23 @@ properties:
       ValueData: 00000001
       Ensure: Present
       Force: True
+####
+# Set dark mode
+  - resource: Microsoft.Windows.Developer/EnableDarkMode
+    id: EnableDarkMode
+    directives:
+      description: Enable dark mode
+      allowPrerelease: true
+    settings:
+      Ensure: Present
+      RestartExplorer: true
 ###########################################################################
   - resource: Microsoft.WinGet.DSC/WinGetPackage
-      directives:
-        description: Install Git
-      settings:
-        id: Git.Git
-        source: winget
+    directives:
+      description: Install Git
+    settings:
+      id: Git.Git
+      source: winget
   - resource: GitDsc/GitClone
     directives:
       description: Clone the winget-cli repository
@@ -72,11 +84,11 @@ properties:
     settings:
       HttpsUrl: https://github.com/microsoft/winget-cli.git
       RootDirectory: "${WingetConfigRoot}/SampleRepos/"
-    - resource: GitDsc/GitRemote
-      directives:
-        description: Add a remote repository to the cloned winget-cli repository.
-        allowPrerelease: true
-      settings:
-        RemoteName: exampleName
-        RemoteUrl: https://github.com/exampleName/winget-cli.git
-        ProjectDirectory: '${WingetConfigRoot}/SampleRepos/winget-cli'
+  - resource: GitDsc/GitRemote
+    directives:
+      description: Add a remote repository to the cloned winget-cli repository.
+      allowPrerelease: true
+    settings:
+      RemoteName: exampleName
+      RemoteUrl: https://github.com/exampleName/winget-cli.git
+      ProjectDirectory: '${WingetConfigRoot}/SampleRepos/winget-cli'
