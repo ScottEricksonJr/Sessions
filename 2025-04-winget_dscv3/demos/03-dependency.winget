@@ -1,0 +1,51 @@
+# yaml-language-server: $schema=https://aka.ms/configuration-dsc-schema/0.2
+## 10min
+properties:
+  configurationVersion: 0.2.0
+  assertions: ## Assertions are used to validate the system state before applying the configuration
+#####################################################
+  - resource: Microsoft.Windows.Developer/OsVersion
+    id: MinOSVersionWin11
+    directives:
+      description: Verify min OS version requirement
+      allowPrerelease: true
+    settings:
+      MinVersion: '10.0.22000'
+#####################################################
+  - resource: PSDscResources/Registry
+    id: RegKeyExists
+    directives:
+      description: Verify registry key exists
+      allowPrerelease: true
+    settings:
+      key: HKEY_LOCAL_MACHINE\Software\Important
+      valueName: ImportantValue
+      valueData: test
+      valueType: String
+      ensure: Present 
+  resources:
+###########################################################################
+  - resource: Microsoft.VisualStudio.DSC/VSComponents 
+    id: vsWorkloads
+    dependsOn:
+      - vsPackage  ## Defines the dependency chain. Set to the ID we set for the VS install
+    directives:
+      description: Install required VS workloads
+      allowPrerelease: true
+      securityContext: elevated
+    settings:
+      productId: Microsoft.VisualStudio.Product.Professional
+      channelId: VisualStudio.17.Release
+      includeRecommended: true
+      AllowUnsignedExtensions: true
+      VSConfigFile: "${WinGetConfigRoot}\\referencefiles\\.vsconfig" ## WinGetConfigRoot points to the root directory you are running the config from
+###########################################################################
+  - resource: Microsoft.WinGet.DSC/WinGetPackage
+    id: vsPackage
+    directives:
+      description: Install Visual Studio 2022 Professional
+      allowPrerelease: true
+      securityContext: elevated # Run as elevated user, fails if not run as admin
+    settings:
+      id: Microsoft.VisualStudio.2022.Professional
+      source: winget

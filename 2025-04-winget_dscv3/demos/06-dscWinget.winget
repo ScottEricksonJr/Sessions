@@ -1,39 +1,24 @@
 # yaml-language-server: $schema=https://aka.ms/configuration-dsc-schema/0.2
-##TODO: things to show: resource names, where cmdlets get downloaded to, how to find things
+properties:  
   configurationVersion: 0.2.0
-  assertions:
-  - resource: Microsoft.Windows.Developer/OsVersion
-    id: MinOSVersionWin11
-    directives:
-      description: Verify min OS version requirement
-      allowPrerelease: true
-    settings:
-      MinVersion: '10.0.22000'
   resources:
 ###########################################################################
-# Setting: Create Recast Administrator group
-# Notes:
-###########################################################################
-  - resource: xPSDesiredStateConfiguration/xGroup
-    id: RecastAdminGroup
+  - resource: xPSDesiredStateConfiguration/xGroup ## This is a classic powershell DSC resource, nothing specific to DSCv3 https://www.powershellgallery.com/packages/xPSDesiredStateConfiguration/
+    id: SuperSecretGroup
     directives:
-      description: Ensure Recast Administrators group exists
+      description: Ensure SuperSecretGroup group exists
       allowPrerelease: true
     settings:
-      GroupName: "Recast Administrators"
+      GroupName: "SuperSecretGroup"
       Ensure: Present
   - resource: xPSDesiredStateConfiguration/xGroup
     id: RecastAdminGroupMembers
     dependsOn:
-      - RecastAdminGroup
+      - SuperSecretGroup ## Even though its a classic DSC resource, we can still use the dependsOn property
     directives:
-      description: Ensure is a member of Recast Administrators group
+      description: Ensure users group is a member of SuperSecretGroup group
       allowPrerelease: true
     settings:
-      GroupName: "Recast Administrators"
-      MembersToInclude: ["DOMAIN\\GROUPNAME"]
+      GroupName: "SuperSecretGroup"
+      MembersToInclude: ["Users"]
       Ensure: Present
-
-#Install IIS
-#Configure it
-#WebAdministrationDsc
