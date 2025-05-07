@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=https://aka.ms/configuration-dsc-schema/0.2
+properties:
+  configurationVersion: 0.2.0
+  resources:
+########################################################################### 
+  - resource: Script ## Executing a script resource. Runs in pwsh. Doing this because winget dsc resource does not allow override arguments
+    id: sqlserver
+    directives:
+      description: "Install SQL Server 2022 Developer using winget with custom arguments"
+    settings:
+      GetScript: | ## The get script is invoked to determine if the resource is installed
+        $installed = Test-Path "C:\Program Files\Microsoft SQL Server\160\Setup Bootstrap"
+        return @{ Installed = $installed }
+      TestScript: return (Test-Path "C:\Program Files\Microsoft SQL Server\160\Setup Bootstrap") ## The set script returns true/false of if the resource is installed
+      SetScript: | ## The set script is invoked to run the script block
+        $wingetExe = "winget.exe"
+        $overrideArgs = "/QUIET /IACCEPTSQLSERVERLICENSETERMS /ConfigurationFile=${WinGetConfigRoot}\referencefiles\ConfigurationFile.ini"
+        $command = "$wingetExe install --id Microsoft.SQLServer.2022.Developer --source winget --accept-source-agreements --accept-package-agreements --override `"$overrideArgs`""
+        Write-Output "Executing: $command"
+        Invoke-Expression $command
+        return @{ Installed = $true }
+  ########################################################################### 
+  - resource: Microsoft.WinGet.DSC/WinGetPackage
+    id: ssms
+    directives:
+      description: Install Sql Server Management Studio
+      allowPrerelease: true
+    settings:
+      id: Microsoft.SQLServerManagementStudio

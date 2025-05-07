@@ -1,0 +1,93 @@
+# Template to run winget dsc config
+
+parameters:
+  # Define the parameters required for the pipeline
+  - name: Machines # List of target machines
+    type: string
+  - name: Domain # Domain of the target machines
+    type: string
+  - name: configurationFile # Path to the WinGet configuration file
+    type: string
+    default: 'C:\WinGet\devvm-standard.winget'
+  - name: DeploymentAccountUser # Username for the deployment account
+    type: string
+  - name: DeploymentAccountPassword # Password for the deployment account
+    type: string
+    
+steps:
+- task: PowerShellOnTargetMachines@3
+  displayName: Setup Autologon
+  inputs:
+    Machines: '$(Machines).$(Domain)' # Combine machine names with the domain
+    CommunicationProtocol: 'Http' # Use HTTP for communication
+    InlineScript: |
+      # Set up variables for autologon
+      $USERNAME = "$(DeploymentAccountUser)" # Deployment account username
+      $Domain = "$(Domain)" # Domain of the target machines
+      $Password = '$(DeploymentAccountPassword)' # Deployment account password
+
+      ## Download autologon tool and configure it
+      start-process -FilePath C:\WinGet\Autologon.exe -ArgumentList $USERNAME, $Domain, $Password,'-accepteula' # Run Autologon tool with provided credentials
+
+      # Define the PowerShell command to run WinGet configuration
+      $psCommand = @'
+      Start-Sleep 120 # Wait for 2 minutes to ensure system readiness
+      Start-Process winget -ArgumentList "configure --enable" -wait # Enable WinGet configuration
+      Start-Sleep -Seconds 5 # Short delay before next command
+      Start-Process winget -ArgumentList "configure --file C:\WinGet\devvm-standard.winget --accept-configuration-agreements" -wait # Apply the WinGet configuration file
+      '@
+
+      # Escape double quotes and line breaks for the registry
+      $escapedCommand = $psCommand -replace '"', '\"' -replace "`r`n", '; ' # Prepare command for registry entry
+
+      # Final command to insert into RunOnce registry key
+      $runOnceValue = "powershell.exe -Command `"$escapedCommand`"" # Command to execute on next login
+
+      # Set the RunOnce key to execute the command on next login
+      Set-ItemProperty -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce" `
+          -Name "WingetConfig" `
+          -Value $runOnceValue # Add the command to RunOnce registry key
+
+- task: PowerShell@2
+  displayName: Restart VM
+  inputs:
+    targetType: 'inline'
+    script: 'Restart-Computer -ComputerName "$(Machines).$(Domain)" -Wait -For PowerShell -Timeout 300 -Delay 2 -force' # Restart the target machine and wait for it to come back online
+
+- task: PowerShellOnTargetMachines@3
+  displayName: Monitor Progress and Cleanup
+  inputs:
+    Machines: '$(Machines).$(Domain)' # Target machines for monitoring
+    CommunicationProtocol: 'Http' # Use HTTP for communication
+    InlineScript: |
+      Start-Sleep -Seconds 60 # Initial wait before monitoring
+      while ($true) {
+          $WinGetInstances = Get-Process -Name ConfigurationRemotingServer -ErrorAction SilentlyContinue # Check for running WinGet processes
+          if ($WinGetInstances.Count -lt 1) {
+              Write-Output "Install finished" # Exit loop if no processes are found
+              break
+          }
+          Start-Sleep -Seconds 60 # Wait before checking again
+      }
+      
+      # Disable Autologon
+      $regPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" # Registry path for autologon settings
+      $keysToDelete = @("AutoAdminLogon", "DefaultUserName", "DefaultPassword", "DefaultDomainName") # Keys to remove
+      
+      foreach ($key in $keysToDelete) {
+          Remove-ItemProperty -Path $regPath -Name $key -ErrorAction SilentlyContinue # Remove each key
+          Write-Output "Deleted $key" # Log deletion
+      }
+      
+      Write-Output "AutoLogon registry keys have been deleted." # Log completion
+      
+      # Remove RunOnce keys
+      $regPath = "HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce" # Registry path for RunOnce keys
+      $keyName = "WinGetConfigure" # Name of the RunOnce key to remove
+      Remove-ItemProperty -Path $regPath -Name $keyName -ErrorAction Ignore # Remove the key
+
+- task: PowerShell@2
+  displayName: Restart VM
+  inputs:
+    targetType: 'inline'
+    script: 'Restart-Computer -ComputerName "$(Machines).$(Domain)" -Wait -For PowerShell -Timeout 300 -Delay 2 -force' # Final restart to ensure changes are applied

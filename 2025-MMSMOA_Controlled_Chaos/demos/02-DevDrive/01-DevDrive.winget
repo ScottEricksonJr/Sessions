@@ -1,0 +1,27 @@
+properties:
+  assertions:
+    - resource: Microsoft.Windows.Developer/OsVersion
+      id: MinOSVersionWin11
+      directives:
+        description: Verify min OS version requirement
+        allowPrerelease: true
+      settings:
+        MinVersion: '10.0.26100'
+  resources:
+    ###########################################################################
+    # Setting: Configure windows Dev Drive
+    # Notes: Physical drive 1 is used
+    ###########################################################################
+    - resource: Disk
+      id: DevDrive
+      directives:
+        module: StorageDsc
+        allowPrerelease: true
+      settings:
+        DiskID: '1'
+        DiskIDType: 'Number'
+        DriveLetter: 'D'
+        FSLabel: 'DevDrive'
+        DevDrive: true
+        AllowDestructive: True  ## will format the drive to create the dev drive
+        FSFormat: 'ReFS'

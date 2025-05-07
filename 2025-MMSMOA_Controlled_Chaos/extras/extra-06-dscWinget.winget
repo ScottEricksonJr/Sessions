@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=https://aka.ms/configuration-dsc-schema/0.2
+properties:  
+  configurationVersion: 0.2.0
+  resources:
+###########################################################################
+  - resource: xPSDesiredStateConfiguration/xGroup ## This is a classic powershell DSC resource, nothing specific to DSCv3 https://www.powershellgallery.com/packages/xPSDesiredStateConfiguration/
+    id: SuperSecretGroup
+    directives:
+      description: Ensure SuperSecretGroup group exists
+      allowPrerelease: true
+    settings:
+      GroupName: "SuperSecretGroup"
+      Ensure: Present
+  - resource: xPSDesiredStateConfiguration/xGroup
+    id: RecastAdminGroupMembers
+    dependsOn:
+      - SuperSecretGroup ## Even though its a classic DSC resource, we can still use the dependsOn property
+    directives:
+      description: Ensure users group is a member of SuperSecretGroup group
+      allowPrerelease: true
+    settings:
+      GroupName: "SuperSecretGroup"
+      MembersToInclude: ["Users"]
+      Ensure: Present

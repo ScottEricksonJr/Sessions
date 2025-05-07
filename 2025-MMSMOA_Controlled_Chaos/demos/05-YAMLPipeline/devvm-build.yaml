@@ -1,0 +1,86 @@
+# Test pipeline for devvm deployment
+name: $(Build.DefinitionName)-$(Machines)-$(Date:yyyyMMdd).$(Rev:rr)
+pool: ## enter pool name
+
+stages:
+- stage: Deploy
+  jobs:
+  - job: Deploy
+    steps:
+      # Step to clone the repository and set up the workspace
+      - checkout: self
+        displayName: Clone Repo
+        persistCredentials: true
+        clean: true
+        sparseCheckoutDirectories:  ## enter the path in the repo to clone
+
+      # Step to create a new virtual machine using SCVMM
+      - task: SCVMM@1
+        displayName: Create VM
+        inputs:
+          ConnectedServiceName: 'SCVMM' # Name of the SCVMM service connection
+          Action: 'NewVM' # Action to create a new VM
+          NewVMsFromTemplates: true # Use templates to create the VM
+          NewVMsFromTemplatesVMList: '$(Machines)' # List of machines to create
+          VMTemplateSources: 'Development Machine - Windows 11' # Template name in SCVMM to use on the VM
+          computerNameFromTemplate: false # Do not use the template's computer name
+          CloudFilterForNewVM: '$(Domain)' # Cloud filter for the new VM
+          NewEnvironmentTag: 'Test' # Tag for the new environment
+          NetworkIsolation: true # Enable network isolation
+          IsVMNetworkAlreadyCreated: 'useExisting' # Use an existing network
+          IsolatedVMNetworkName: # Name of the isolated network
+
+      # Step to start the newly created virtual machine
+      - task: SCVMM@1
+        displayName: Start VM
+        inputs:
+          ConnectedServiceName: 'SCVMM' # Name of the SCVMM service connection
+          Action: 'StartVM' # Action to start the VM
+          VMList: '$(Machines)' # List of machines to start
+          ScopeFilter: 'CloudFiltering' # Scope filter for the action
+          CloudFilter: '$(Domain)' # Cloud filter for the action
+
+      # Step to wait for the VM to initialize
+      - task: PowerShell@2
+        displayName: Wait
+        inputs:
+          targetType: 'inline'
+          script: |
+            start-sleep 120 # Wait for 120 seconds
+
+      # Step to copy WinGet configuration files to the remote server
+      - task: PowerShell@2
+        displayName: Copy WinGet Files
+        inputs:
+          targetType: 'inline'
+          script: |
+            # Parameters for remote server and local path
+            $remoteServers = '$(Machines).$(Domain)'
+            $remotePath = "$(StagePath)"
+            $localPath = "$(Build.SourcesDirectory)\" ## enter the path to the local files here, same path you cloned
+
+            # Network Share Path
+            foreach ($remoteServer in $remoteServers) {
+              if ([String]::IsNullOrWhiteSpace($remoteServer)) { Continue }
+              $networkShare = ("\\$remoteServer\c`$\$remotePath").replace(':', '$')
+              Write-Host "Copying artifacts from $localPath to $networkShare"
+              Write-Host "Copying to $networkShare"
+
+              # Ensure that the network share is accessible and create the target directory if needed
+              if (-Not (Test-Path -Path $networkShare)) {
+                Write-Host "Network share path does not exist. Creating it."
+                New-Item -Path $networkShare -ItemType Directory -Force
+              }
+
+              # Copy the artifacts to the remote server
+              Copy-Item -Path "$localPath\*" -Destination $networkShare -Recurse -Force
+            }
+
+      # Step to deploy the WinGet DSC configuration using a template
+      - template: .templates/template-deploy-winget-dsc-configuration.yaml
+        parameters:
+          Machines: '$(Machines)' # List of machines to deploy to
+          Domain: '$(Domain)' # Domain for the deployment
+          DeploymentAccountUser: $(DeploymentAccountUser) # Deployment account username
+          DeploymentAccountPassword: $(DeploymentAccountPassword) # Deployment account password
+          configurationFile: 'C:\WinGet\devvm-standard.winget' # Path to the configuration file

@@ -4,3 +4,4 @@ Get-CimInstance -ClassName Win32_Volume | Select-Object Name, FileSystem, Label,
 ## Set power plan to high performance
 $PowerPlan = Get-CimInstance -ClassName Win32_PowerPlan | Where-Object { $_.IsActive -eq $true }
 $PowerPlan | Set-CimInstance -Arguments @{ PowerSettingIndex = 0 } -PassThru | Out-Null
+

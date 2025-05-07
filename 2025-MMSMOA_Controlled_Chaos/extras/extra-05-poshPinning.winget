@@ -1,0 +1,40 @@
+# yaml-language-server: $schema=https://aka.ms/configuration-dsc-schema/0.2
+## run 'winget upgrade' before and after
+properties:
+  configurationVersion: 0.2.0
+  resources:
+###########################################################################
+  - resource: Microsoft.WinGet.DSC/WinGetPackage
+    id: vscode
+    directives:
+      description: Install VS Code
+      allowPrerelease: true
+    settings:
+      id: Microsoft.VisualStudioCode
+      version: 1.90.0 
+########################################################################### 
+  - resource: Script ## Executing a script resource. Runs in pwsh. Doing this because winget dsc resource does not allow setting pinning
+    id: pinapp
+    dependsOn:
+      - vscode
+    directives:
+      description: "Enable app pinning on VS Code"
+    settings:
+      GetScript: | ## The get script is invoked to determine state of the resource. returns pair of @{ Installed = $true/false }
+        $appid = "Microsoft.VisualStudioCode"
+        $version = "1.90.0"
+        $command = "winget.exe pin list"
+        $installed = Invoke-Expression $command
+        if ($installed -match "$appid"){return @{ Installed = $true }} else {return @{ Installed = $false }}
+      TestScript: | ## The set script returns simple true/false of if the resource is installed
+        $appid = "Microsoft.VisualStudioCode"
+        $version = "1.90.0"
+        $command = "winget.exe pin list"
+        $installed = Invoke-Expression $command
+        if ($installed -match "$appid"){return $true} else {return $false}
+      SetScript: | ## The set script is invoked to run the script block
+        $appid = "Microsoft.VisualStudioCode"
+        $version = "1.90.0"
+        $command = "winget.exe pin add --id $appid --version $version"
+        Invoke-Expression $command
+        return @{ Installed = $true }
